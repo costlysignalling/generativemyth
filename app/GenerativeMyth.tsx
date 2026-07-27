@@ -13,76 +13,60 @@ const DISTANCE = 30;
 
 const copy = {
   cz: {
-    eyebrow: "Rekurzivní vyprávěcí stroj",
     title: "Generativní Mýtus",
-    intro:
-      "Měňte rodokmen identických princů. Obraz i příběh vznikají okamžitě ve vašem prohlížeči.",
-    controls: "Pravidla světa",
-    brothers: "Bratři",
-    brothersHint: "Počet synů, cest a měst v každém světě.",
-    success: "Kdo uspěje?",
-    single: "Jeden",
-    several: "Několik",
-    all: "Všichni",
-    prince: "Číslo úspěšného prince",
-    vector: "Úspěšní princové",
-    vectorHint: "Čísla oddělte čárkou, například 1, 2, 3.",
-    generations: "Generace",
-    visual: "Obraz",
-    myth: "Mýtus",
-    citySize: "Velikost měst",
-    zoom: "Přiblížení",
-    opacity: "Neprůhlednost",
-    advanced: "Vzhled a export",
-    cityColor: "Barva měst",
-    landColor: "Barva krajiny",
-    reset: "Výchozí vzhled",
-    downloadSvg: "Stáhnout SVG",
-    downloadPng: "Stáhnout PNG",
-    copy: "Kopírovat text",
+    brothers: "b : brothers : bratři : base",
+    success: "s : succeeded : splnil : survived : symbol : sign",
+    single: "1 : one : jeden",
+    several: "+ : more : více",
+    all: "* : all : všichni",
+    prince: "s : succeeded : splnil : survived : symbol : sign",
+    vector:
+      "s : succeeded : splnil : survived : symbol : sign (vector : vektor)",
+    generations: "g : generations : generace",
+    visual: "plot : obraz",
+    myth: "myth : mýtus",
+    citySize: "city size : velikost města",
+    zoom: "zoom",
+    opacity: "city opacity : neprůhlednost města",
+    advanced: "advanced visual settings : vzhled",
+    cityColor: "city color : barva města",
+    landColor: "land color : barva krajiny",
+    reset: "reset : výchozí",
+    downloadSvg: "download SVG : stáhnout SVG",
+    downloadPng: "download PNG : stáhnout PNG",
+    copy: "copy : kopírovat",
     copied: "Zkopírováno",
-    cities: "měst v obrazci",
-    survivors: "úspěšných linií",
-    live: "živý výpočet",
     truncated:
-      "Náhled zobrazuje první část obrazce. SVG zachová stejný bezpečný limit.",
+      "… obraz přesahuje bezpečný limit 30 000 měst",
     canvasLabel: "Rekurzivní geometrický obraz generativního mýtu",
     language: "Jazyk",
   },
   en: {
-    eyebrow: "A recursive storytelling engine",
     title: "Generative Myth",
-    intro:
-      "Alter the lineage of identical princes. Image and story unfold instantly in your browser.",
-    controls: "Rules of the world",
-    brothers: "Brothers",
-    brothersHint: "The number of sons, paths and cities in every world.",
-    success: "Who succeeds?",
-    single: "One",
-    several: "Several",
-    all: "All",
-    prince: "Successful prince number",
-    vector: "Successful princes",
-    vectorHint: "Separate numbers with commas, for example 1, 2, 3.",
-    generations: "Generations",
-    visual: "Image",
-    myth: "Myth",
-    citySize: "City size",
-    zoom: "Zoom",
-    opacity: "Opacity",
-    advanced: "Appearance & export",
-    cityColor: "City colour",
-    landColor: "Land colour",
-    reset: "Reset appearance",
-    downloadSvg: "Download SVG",
-    downloadPng: "Download PNG",
-    copy: "Copy text",
+    brothers: "b : brothers : bratři : base",
+    success: "s : succeeded : splnil : survived : symbol : sign",
+    single: "1 : one : jeden",
+    several: "+ : more : více",
+    all: "* : all : všichni",
+    prince: "s : succeeded : splnil : survived : symbol : sign",
+    vector:
+      "s : succeeded : splnil : survived : symbol : sign (vector : vektor)",
+    generations: "g : generations : generace",
+    visual: "plot : obraz",
+    myth: "myth : mýtus",
+    citySize: "city size : velikost města",
+    zoom: "zoom",
+    opacity: "city opacity : neprůhlednost města",
+    advanced: "advanced visual settings : vzhled",
+    cityColor: "city color : barva města",
+    landColor: "land color : barva krajiny",
+    reset: "reset : výchozí",
+    downloadSvg: "download SVG : stáhnout SVG",
+    downloadPng: "download PNG : stáhnout PNG",
+    copy: "copy : kopírovat",
     copied: "Copied",
-    cities: "cities in the pattern",
-    survivors: "successful lineages",
-    live: "live calculation",
     truncated:
-      "The preview shows the first part of the pattern. SVG uses the same safe limit.",
+      "… image exceeds the safe limit of 30,000 cities",
     canvasLabel: "Recursive geometric image of the generative myth",
     language: "Language",
   },
@@ -97,26 +81,6 @@ function parseSurvivors(value: string, brothers: number) {
     .map(Number)
     .filter((item) => Number.isInteger(item) && item >= 1 && item <= brothers);
   return [...new Set(parsed)].sort((a, b) => a - b);
-}
-
-function countLabel(brothers: number, survivors: number, generations: number) {
-  if (generations === 0) return "1";
-  if (survivors === 0) return String(1 + brothers);
-  const logTerm =
-    Math.log10(brothers) +
-    (survivors === 1
-      ? Math.log10(generations)
-      : generations * Math.log10(survivors) - Math.log10(survivors - 1));
-  if (logTerm < 12) {
-    const total =
-      survivors === 1
-        ? 1 + brothers * generations
-        : 1 + (brothers * (survivors ** generations - 1)) / (survivors - 1);
-    return Math.round(total).toLocaleString();
-  }
-  const exponent = Math.floor(logTerm);
-  const coefficient = 10 ** (logTerm - exponent);
-  return `${coefficient.toFixed(2)} × 10^${exponent}`;
 }
 
 function polygonPoints(city: City, brothers: number, radius: number) {
@@ -329,11 +293,7 @@ export default function GenerativeMyth() {
   return (
     <main className="app-shell">
       <header className="masthead">
-        <div>
-          <p className="eyebrow">{t.eyebrow}</p>
-          <h1>{t.title}</h1>
-          <p className="intro">{t.intro}</p>
-        </div>
+        <h1>{t.title}</h1>
         <div className="language-switch" aria-label={t.language}>
           <button
             className={language === "cz" ? "active" : ""}
@@ -354,11 +314,6 @@ export default function GenerativeMyth() {
 
       <div className="workspace">
         <aside className="control-panel">
-          <div className="panel-heading">
-            <span>01</span>
-            <h2>{t.controls}</h2>
-          </div>
-
           <label className="field">
             <span>{t.brothers}</span>
             <input
@@ -372,7 +327,6 @@ export default function GenerativeMyth() {
                 setSingle((current) => clamp(current, 1, next));
               }}
             />
-            <small>{t.brothersHint}</small>
           </label>
 
           <fieldset className="field">
@@ -414,7 +368,6 @@ export default function GenerativeMyth() {
                 value={several}
                 onChange={(event) => setSeveral(event.target.value)}
               />
-              <small>{t.vectorHint}</small>
             </label>
           )}
 
@@ -534,33 +487,12 @@ export default function GenerativeMyth() {
                 {t.myth}
               </button>
             </div>
-            <div className="live-badge">
-              <i />
-              {t.live}
-            </div>
           </div>
 
           {tab === "visual" ? (
             <>
               <div className="canvas-stage" ref={stageRef}>
                 <canvas ref={canvasRef} aria-label={t.canvasLabel} />
-                <div className="north-mark" aria-hidden="true">
-                  N
-                </div>
-                <div className="stage-index" aria-hidden="true">
-                  GM / {String(generations).padStart(2, "0")}
-                </div>
-              </div>
-              <div className="status-row">
-                <p>
-                  <strong>
-                    {countLabel(brothers, survivors.length, generations)}
-                  </strong>{" "}
-                  {t.cities}
-                </p>
-                <p>
-                  <strong>{survivors.length}</strong> {t.survivors}
-                </p>
               </div>
               {renderResult.truncated && (
                 <p className="notice">{t.truncated}</p>

@@ -34,6 +34,18 @@ Upload the contents of `static-dist` to the document root of GitHub Pages,
 Netlify, Cloudflare Pages, an S3-compatible host, or a conventional web server.
 No R runtime, database, or backend is needed.
 
+## Build the offline archival edition
+
+Run:
+
+```text
+pnpm build:archive
+```
+
+This creates `archive/GenerativeMyth.html`, a single double-clickable file with
+all application code and styling embedded. It makes no network requests and
+also writes a SHA-256 checksum for integrity verification.
+
 ## Production build
 
 Run:
