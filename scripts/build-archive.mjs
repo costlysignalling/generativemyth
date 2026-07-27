@@ -40,8 +40,18 @@ const singleFile = sourceHtml
     "",
   )
   .replace(styleSource[0], () => `<style>\n${css}\n</style>`)
-  .replace(scriptSource[0], () => `<script>\n${safeJavascript}\n</script>`)
-  .replace(/\s+crossorigin(?=[\s>])/g, "");
+  .replace(scriptSource[0], "")
+  .replace(/\s+crossorigin(?=[\s>])/g, "")
+  .replace(
+    /<\/body>/i,
+    () => `<script>\n${safeJavascript}\n</script>\n  </body>`,
+  );
+
+const rootPosition = singleFile.indexOf('id="root"');
+const scriptPosition = singleFile.lastIndexOf("<script>");
+if (rootPosition === -1 || scriptPosition < rootPosition) {
+  throw new Error("The archive script must run after the application root exists.");
+}
 
 await mkdir(archiveRoot, { recursive: true });
 const outputPath = resolve(archiveRoot, "GenerativeMyth.html");

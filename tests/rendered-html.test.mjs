@@ -44,7 +44,7 @@ test("server-renders the finished Generative Myth app", async () => {
     /s : succeeded : splnil : survived : symbol : sign/,
   );
   assert.match(html, /g : generations : generace/);
-  assert.match(html, /https:\/\/myth\.example\/og\.png/);
+  assert.match(html, /https:\/\/myth\.example\/og-dark\.png/);
   assert.doesNotMatch(
     html,
     /codex-preview|react-loading-skeleton|Rekurzivní vyprávěcí stroj|Pravidla světa/i,
@@ -86,6 +86,10 @@ test("produces a self-contained double-clickable archival file", async () => {
   assert.doesNotMatch(
     archived,
     /<script[^>]+src=|<link[^>]+stylesheet|https?:\/\/fonts\./i,
+  );
+  assert.ok(
+    archived.indexOf('id="root"') < archived.lastIndexOf("<script>"),
+    "the embedded application must run after its root element exists",
   );
   await access(new URL("../archive/SHA256SUMS.txt", import.meta.url));
 });
