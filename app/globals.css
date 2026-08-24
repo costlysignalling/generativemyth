@@ -38,7 +38,7 @@ button {
   width: min(1500px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 30px 36px 48px;
+  padding: 24px 36px 48px;
 }
 
 .masthead {
@@ -46,14 +46,14 @@ button {
   align-items: flex-end;
   justify-content: space-between;
   gap: 28px;
-  margin-bottom: 26px;
-  padding-bottom: 22px;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
   border-bottom: 0;
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(32px, 4vw, 56px);
+  font-size: clamp(27px, 3vw, 44px);
   font-style: normal;
   font-weight: 400;
   line-height: 1;
@@ -388,6 +388,29 @@ input[type="range"]::-moz-range-thumb {
   accent-color: var(--white);
 }
 
+.render-options {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.render-options button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.render-options button:hover,
+.render-options button.active {
+  border-color: var(--white);
+  color: var(--black);
+  background: var(--white);
+}
+
 .canvas-stage {
   position: relative;
   height: clamp(520px, 73vh, 850px);
@@ -475,7 +498,7 @@ input[type="range"]::-moz-range-thumb {
 
   h1 {
     max-width: 290px;
-    font-size: 38px;
+    font-size: 32px;
   }
 
   .control-panel {

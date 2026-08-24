@@ -38,13 +38,10 @@ test("server-renders the finished Generative Myth app", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Generative Myth · Generativní Mýtus<\/title>/i);
-  assert.match(html, /Generativní Mýtus/);
-  assert.match(html, /b : brothers : bratři : base/);
-  assert.match(
-    html,
-    /s : succeeded : splnil : survived : symbol : sign/,
-  );
-  assert.match(html, /g : generations : generace/);
+  assert.match(html, /Generative Myth/);
+  assert.match(html, /b : brothers : base/);
+  assert.match(html, /s : succeeded : survived : symbol : sign/);
+  assert.match(html, /g : generations/);
   assert.match(html, />CZ</);
   assert.match(html, />EN</);
   assert.match(html, />GE</);
@@ -79,7 +76,12 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /b : brothers : Brüder : base/);
   assert.match(component, /s : succès : survécu : symbole : signe/);
   assert.match(component, />raw</);
-  assert.match(component, /MAX_CITIES = 30_000/);
+  assert.match(component, /SAFE_MAX_CITIES = 50_000/);
+  assert.match(component, /riskMode \? Number\.POSITIVE_INFINITY : SAFE_MAX_CITIES/);
+  assert.match(component, /cityCoordinateKey/);
+  assert.match(component, /navigator\.languages/);
+  assert.match(component, /setLanguage\(detectLanguage\(\)\)/);
+  assert.match(component, /simplify/);
   assert.match(myth, /There stands a castle in the middle of the world/);
   assert.match(myth, /Uprostřed světa stojí hrad/);
   assert.match(myth, /In der Mitte der Welt steht ein Schloss/);

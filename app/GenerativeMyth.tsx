@@ -7,7 +7,7 @@ type Tab = "visual" | "myth";
 type City = { x: number; y: number; rotation: number };
 type RenderResult = { drawn: number; truncated: boolean };
 
-const MAX_CITIES = 30_000;
+const SAFE_MAX_CITIES = 50_000;
 const DISTANCE = 30;
 
 const copy = {
@@ -29,8 +29,10 @@ const copy = {
     downloadPng: "stáhnout PNG",
     copy: "kopírovat",
     copied: "Zkopírováno",
+    simplify: "zjednodušit",
+    risk: "risknout",
     truncated:
-      "… obraz přesahuje bezpečný limit 30 000 měst",
+      "… obraz přesahuje bezpečný limit 50 000 měst",
     canvasLabel: "Rekurzivní geometrický obraz generativního mýtu",
   },
   en: {
@@ -51,8 +53,10 @@ const copy = {
     downloadPng: "download PNG",
     copy: "copy",
     copied: "Copied",
+    simplify: "simplify",
+    risk: "risk it",
     truncated:
-      "… image exceeds the safe limit of 30,000 cities",
+      "… image exceeds the safe limit of 50,000 cities",
     canvasLabel: "Recursive geometric image of the generative myth",
   },
   de: {
@@ -73,7 +77,9 @@ const copy = {
     downloadPng: "PNG herunterladen",
     copy: "kopieren",
     copied: "Kopiert",
-    truncated: "… das Bild überschreitet die sichere Grenze von 30.000 Städten",
+    simplify: "vereinfachen",
+    risk: "riskieren",
+    truncated: "… das Bild überschreitet die sichere Grenze von 50.000 Städten",
     canvasLabel: "Rekursives geometrisches Bild des generativen Mythos",
   },
   fr: {
@@ -94,7 +100,9 @@ const copy = {
     downloadPng: "télécharger le PNG",
     copy: "copier",
     copied: "Copié",
-    truncated: "… l’image dépasse la limite sûre de 30 000 villes",
+    simplify: "simplifier",
+    risk: "risquer",
+    truncated: "… l’image dépasse la limite sûre de 50 000 villes",
     canvasLabel: "Image géométrique récursive du mythe génératif",
   },
 } as const;
@@ -126,6 +134,7 @@ function walkCities(
   survivors: number[],
   generations: number,
   visit: (city: City) => void,
+  maxCities = SAFE_MAX_CITIES,
 ): RenderResult {
   let drawn = 0;
   let active: City[] = [{ x: 0, y: 0, rotation: 0 }];
@@ -136,7 +145,7 @@ function walkCities(
     const nextActive: City[] = [];
     for (const parent of active) {
       for (let index = 0; index < brothers; index += 1) {
-        if (drawn >= MAX_CITIES) return { drawn, truncated: true };
+        if (drawn >= maxCities) return { drawn, truncated: true };
         const rotation = parent.rotation + (index * 2) / brothers;
         const theta = Math.PI * (0.5 + rotation);
         const child = {
@@ -153,6 +162,26 @@ function walkCities(
     if (active.length === 0) break;
   }
   return { drawn, truncated: false };
+}
+
+function cityCoordinateKey(city: City) {
+  return `${Math.round(city.x * 1_000_000)}:${Math.round(city.y * 1_000_000)}`;
+}
+
+function detectLanguage(): Language {
+  const preferences = navigator.languages?.length
+    ? navigator.languages
+    : [navigator.language];
+
+  for (const preference of preferences) {
+    const code = preference.toLowerCase().split("-")[0];
+    if (code === "cs" || code === "cz") return "cz";
+    if (code === "de") return "de";
+    if (code === "fr") return "fr";
+    if (code === "en") return "en";
+  }
+
+  return "en";
 }
 
 function hexToRgba(hex: string, opacity: number) {
@@ -173,7 +202,7 @@ function download(name: string, blob: Blob) {
 }
 
 export default function GenerativeMyth() {
-  const [language, setLanguage] = useState<Language>("cz");
+  const [language, setLanguage] = useState<Language>("en");
   const [brothers, setBrothers] = useState(5);
   const [brothersInput, setBrothersInput] = useState("5");
   const [successfulInput, setSuccessfulInput] = useState("5");
@@ -186,6 +215,8 @@ export default function GenerativeMyth() {
   const [landColor, setLandColor] = useState("#000000");
   const [tab, setTab] = useState<Tab>("visual");
   const [raw, setRaw] = useState(false);
+  const [simplify, setSimplify] = useState(false);
+  const [riskMode, setRiskMode] = useState(false);
   const [renderResult, setRenderResult] = useState<RenderResult>({
     drawn: 1,
     truncated: false,
@@ -208,6 +239,10 @@ export default function GenerativeMyth() {
     },
     [brothers, generations, language, raw, survivors, tab],
   );
+
+  useEffect(() => {
+    setLanguage(detectLanguage());
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = language === "cz" ? "cs" : language;
@@ -242,8 +277,14 @@ export default function GenerativeMyth() {
     context.translate(width / 2, height / 2);
     context.scale(scale, -scale);
     context.fillStyle = fill;
+    const renderedCoordinates = simplify ? new Set<string>() : null;
 
     const result = walkCities(brothers, survivors, generations, (city) => {
+      if (renderedCoordinates) {
+        const key = cityCoordinateKey(city);
+        if (renderedCoordinates.has(key)) return;
+        renderedCoordinates.add(key);
+      }
       const margin = radius * 1.5;
       if (
         city.x + margin < -fieldX ||
@@ -258,7 +299,7 @@ export default function GenerativeMyth() {
       points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
       context.closePath();
       context.fill();
-    });
+    }, riskMode ? Number.POSITIVE_INFINITY : SAFE_MAX_CITIES);
     context.restore();
     setRenderResult(result);
   }, [
@@ -269,6 +310,8 @@ export default function GenerativeMyth() {
     logSize,
     logZoom,
     opacity,
+    riskMode,
+    simplify,
     survivors,
   ]);
 
@@ -289,7 +332,13 @@ export default function GenerativeMyth() {
     const scale = size / (field * 2);
     const radius = 5 * 2 ** logSize;
     const shapes: string[] = [];
+    const renderedCoordinates = simplify ? new Set<string>() : null;
     walkCities(brothers, survivors, generations, (city) => {
+      if (renderedCoordinates) {
+        const key = cityCoordinateKey(city);
+        if (renderedCoordinates.has(key)) return;
+        renderedCoordinates.add(key);
+      }
       const points = polygonPoints(city, brothers, radius)
         .map(
           (point) =>
@@ -300,7 +349,7 @@ export default function GenerativeMyth() {
         )
         .join(" ");
       shapes.push(`<polygon points="${points}"/>`);
-    });
+    }, riskMode ? Number.POSITIVE_INFINITY : SAFE_MAX_CITIES);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><rect width="100%" height="100%" fill="${landColor}"/><g fill="${cityColor}" fill-opacity="${opacity}">${shapes.join("")}</g></svg>`;
     download("generative-myth.svg", new Blob([svg], { type: "image/svg+xml" }));
   };
@@ -682,6 +731,28 @@ export default function GenerativeMyth() {
                 />
                 <span>raw</span>
               </label>
+            )}
+            {tab === "visual" && (
+              <div className="render-options">
+                <button
+                  aria-pressed={simplify}
+                  className={simplify ? "active" : ""}
+                  onClick={() => setSimplify((value) => !value)}
+                  type="button"
+                >
+                  {t.simplify}
+                </button>
+                {(renderResult.truncated || riskMode) && (
+                  <button
+                    aria-pressed={riskMode}
+                    className={riskMode ? "active" : ""}
+                    onClick={() => setRiskMode((value) => !value)}
+                    type="button"
+                  >
+                    {t.risk}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </section>
