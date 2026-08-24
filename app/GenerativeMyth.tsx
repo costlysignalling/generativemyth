@@ -24,7 +24,7 @@ const copy = {
     advanced: "vzhled",
     cityColor: "barva města",
     landColor: "barva krajiny",
-    reset: "výchozí vzhled",
+    reset: "výchozí",
     downloadSvg: "stáhnout SVG",
     downloadPng: "stáhnout PNG",
     copy: "kopírovat",
@@ -46,7 +46,7 @@ const copy = {
     advanced: "visual settings",
     cityColor: "city color",
     landColor: "land color",
-    reset: "reset appearance",
+    reset: "default",
     downloadSvg: "download SVG",
     downloadPng: "download PNG",
     copy: "copy",
@@ -68,7 +68,7 @@ const copy = {
     advanced: "Darstellung",
     cityColor: "Stadtfarbe",
     landColor: "Landfarbe",
-    reset: "Darstellung zurücksetzen",
+    reset: "Standard",
     downloadSvg: "SVG herunterladen",
     downloadPng: "PNG herunterladen",
     copy: "kopieren",
@@ -89,7 +89,7 @@ const copy = {
     advanced: "apparence",
     cityColor: "couleur de la ville",
     landColor: "couleur du paysage",
-    reset: "réinitialiser l’apparence",
+    reset: "défaut",
     downloadSvg: "télécharger le SVG",
     downloadPng: "télécharger le PNG",
     copy: "copier",
@@ -337,6 +337,13 @@ export default function GenerativeMyth() {
     setSuccessful(parseSurvivors(successfulInput, next));
   };
 
+  const stepBrothers = (direction: -1 | 1) => {
+    const next = clamp(brothers + direction, 3, 1000);
+    setBrothers(next);
+    setBrothersInput(String(next));
+    setSuccessful(parseSurvivors(successfulInput, next));
+  };
+
   const applyGenerations = (value: string) => {
     if (!/^\d+$/.test(value)) return;
     const next = Number(value);
@@ -345,6 +352,12 @@ export default function GenerativeMyth() {
 
   const commitGenerations = () => {
     const next = clamp(Number(generationsInput), 0, 10000);
+    setGenerations(next);
+    setGenerationsInput(String(next));
+  };
+
+  const stepGenerations = (direction: -1 | 1) => {
+    const next = clamp(generations + direction, 0, 10000);
     setGenerations(next);
     setGenerationsInput(String(next));
   };
@@ -409,21 +422,39 @@ export default function GenerativeMyth() {
         <aside className="control-panel">
           <label className="field">
             <span>{t.brothers}</span>
-            <input
-              type="number"
-              min="3"
-              max="1000"
-              value={brothersInput}
-              onChange={(event) => {
-                const value = event.target.value;
-                setBrothersInput(value);
-                applyBrothers(value);
-              }}
-              onBlur={commitBrothers}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") event.currentTarget.blur();
-              }}
-            />
+            <div className="number-control">
+              <input
+                inputMode="numeric"
+                type="text"
+                value={brothersInput}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setBrothersInput(value);
+                  applyBrothers(value);
+                }}
+                onBlur={commitBrothers}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                }}
+              />
+              <div className="control-column arrow-column">
+                <button
+                  aria-label="Increase number of brothers"
+                  onClick={() => stepBrothers(1)}
+                  type="button"
+                >
+                  ▴
+                </button>
+                <button
+                  aria-label="Decrease number of brothers"
+                  disabled={brothers <= 3}
+                  onClick={() => stepBrothers(-1)}
+                  type="button"
+                >
+                  ▾
+                </button>
+              </div>
+            </div>
           </label>
 
           <div className="field success-field">
@@ -437,7 +468,27 @@ export default function GenerativeMyth() {
                 onChange={(event) => setSuccessfulInput(event.target.value)}
                 onBlur={() => setSuccessful(survivors)}
               />
-              <div className="success-stepper">
+              <div className="control-column math-column">
+                <button
+                  aria-label="Add lowest unused successful brother"
+                  disabled={survivors.length >= brothers}
+                  onClick={addSuccessful}
+                  title="Add lowest unused"
+                  type="button"
+                >
+                  +
+                </button>
+                <button
+                  aria-label="Remove last successful brother"
+                  disabled={survivors.length === 0}
+                  onClick={removeSuccessful}
+                  title="Remove last"
+                  type="button"
+                >
+                  −
+                </button>
+              </div>
+              <div className="control-column arrow-column">
                 <button
                   aria-label="Increase last successful brother"
                   onClick={() => stepLastSuccessful(1)}
@@ -456,44 +507,44 @@ export default function GenerativeMyth() {
                   ▾
                 </button>
               </div>
-              <button
-                aria-label="Remove last successful brother"
-                disabled={survivors.length === 0}
-                onClick={removeSuccessful}
-                title="Remove last"
-                type="button"
-              >
-                −
-              </button>
-              <button
-                aria-label="Add lowest unused successful brother"
-                disabled={survivors.length >= brothers}
-                onClick={addSuccessful}
-                title="Add lowest unused"
-                type="button"
-              >
-                +
-              </button>
             </div>
           </div>
 
           <label className="field">
             <span>{t.generations}</span>
-            <input
-              type="number"
-              min="0"
-              max="10000"
-              value={generationsInput}
-              onChange={(event) => {
-                const value = event.target.value;
-                setGenerationsInput(value);
-                applyGenerations(value);
-              }}
-              onBlur={commitGenerations}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") event.currentTarget.blur();
-              }}
-            />
+            <div className="number-control">
+              <input
+                inputMode="numeric"
+                type="text"
+                value={generationsInput}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setGenerationsInput(value);
+                  applyGenerations(value);
+                }}
+                onBlur={commitGenerations}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                }}
+              />
+              <div className="control-column arrow-column">
+                <button
+                  aria-label="Increase generations"
+                  onClick={() => stepGenerations(1)}
+                  type="button"
+                >
+                  ▴
+                </button>
+                <button
+                  aria-label="Decrease generations"
+                  disabled={generations <= 0}
+                  onClick={() => stepGenerations(-1)}
+                  type="button"
+                >
+                  ▾
+                </button>
+              </div>
+            </div>
           </label>
 
           <div className="rule" />

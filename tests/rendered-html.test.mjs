@@ -72,6 +72,10 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /generationsInput/);
   assert.match(component, /fieldX/);
   assert.match(component, /requestAnimationFrame\(drawCanvas\)/);
+  assert.match(component, /stepBrothers/);
+  assert.match(component, /stepGenerations/);
+  assert.match(component, /control-column math-column/);
+  assert.match(component, /control-column arrow-column/);
   assert.match(component, /b : brothers : Brüder : base/);
   assert.match(component, /s : succès : survécu : symbole : signe/);
   assert.match(component, />raw</);
@@ -83,6 +87,8 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(myth, /integerToLetters/);
   assert.doesNotMatch(css, /@import|https?:\/\//);
   assert.match(css, /::-moz-range-thumb/);
+  assert.match(css, /--black:\s*#000000/);
+  assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) 34px 34px/);
   assert.match(css, /border-radius:\s*0/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.deepEqual(
