@@ -45,9 +45,10 @@ test("server-renders the finished Generative Myth app", async () => {
     /s : succeeded : splnil : survived : symbol : sign/,
   );
   assert.match(html, /g : generations : generace/);
-  assert.match(html, /Čeština/);
-  assert.match(html, /Deutsch/);
-  assert.match(html, /Français/);
+  assert.match(html, />CZ</);
+  assert.match(html, />EN</);
+  assert.match(html, />GE</);
+  assert.match(html, />FR</);
   assert.match(html, /https:\/\/myth\.example\/og-dark\.png/);
   assert.doesNotMatch(
     html,
@@ -67,6 +68,12 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /download SVG|stáhnout SVG/i);
   assert.match(component, /encodeMyth/);
   assert.match(component, /successfulInput/);
+  assert.match(component, /brothersInput/);
+  assert.match(component, /generationsInput/);
+  assert.match(component, /fieldX/);
+  assert.match(component, /requestAnimationFrame\(drawCanvas\)/);
+  assert.match(component, /b : brothers : Brüder : base/);
+  assert.match(component, /s : succès : survécu : symbole : signe/);
   assert.match(component, />raw</);
   assert.match(component, /MAX_CITIES = 30_000/);
   assert.match(myth, /There stands a castle in the middle of the world/);

@@ -12,11 +12,11 @@ const DISTANCE = 30;
 
 const copy = {
   cz: {
-    title: "Generativní Mýtus",
+    title: "Generativní mýtus",
     brothers: "b : brothers : bratři : base",
     success: "s : succeeded : splnil : survived : symbol : sign",
     generations: "g : generations : generace",
-    visual: "obraz",
+    visual: "tvar",
     myth: "mýtus",
     citySize: "velikost města",
     zoom: "přiblížení",
@@ -29,19 +29,16 @@ const copy = {
     downloadPng: "stáhnout PNG",
     copy: "kopírovat",
     copied: "Zkopírováno",
-    successHint:
-      "Čísla oddělte čárkami. + přidá nejnižší volné číslo, − odstraní poslední; šipky mění poslední číslo.",
     truncated:
       "… obraz přesahuje bezpečný limit 30 000 měst",
     canvasLabel: "Rekurzivní geometrický obraz generativního mýtu",
-    language: "Jazyk",
   },
   en: {
     title: "Generative Myth",
-    brothers: "b : brothers : bratři : base",
-    success: "s : succeeded : splnil : survived : symbol : sign",
-    generations: "g : generations : generace",
-    visual: "plot",
+    brothers: "b : brothers : base",
+    success: "s : succeeded : survived : symbol : sign",
+    generations: "g : generations",
+    visual: "shape",
     myth: "myth",
     citySize: "city size",
     zoom: "zoom",
@@ -54,19 +51,16 @@ const copy = {
     downloadPng: "download PNG",
     copy: "copy",
     copied: "Copied",
-    successHint:
-      "Separate numbers with commas. + adds the lowest unused number, − removes the last; arrows change the last number.",
     truncated:
       "… image exceeds the safe limit of 30,000 cities",
     canvasLabel: "Recursive geometric image of the generative myth",
-    language: "Language",
   },
   de: {
     title: "Generativer Mythos",
-    brothers: "b : brothers : bratři : base",
-    success: "s : succeeded : splnil : survived : symbol : sign",
-    generations: "g : generations : generace",
-    visual: "Bild",
+    brothers: "b : brothers : Brüder : base",
+    success: "s : succeeded : siegreich : survived : symbol : sign",
+    generations: "g : generations : Generationen",
+    visual: "Form",
     myth: "Mythos",
     citySize: "Stadtgröße",
     zoom: "Vergrößerung",
@@ -79,18 +73,15 @@ const copy = {
     downloadPng: "PNG herunterladen",
     copy: "kopieren",
     copied: "Kopiert",
-    successHint:
-      "Zahlen durch Kommas trennen. + ergänzt die kleinste freie Zahl, − entfernt die letzte; die Pfeile ändern die letzte Zahl.",
     truncated: "… das Bild überschreitet die sichere Grenze von 30.000 Städten",
     canvasLabel: "Rekursives geometrisches Bild des generativen Mythos",
-    language: "Sprache",
   },
   fr: {
     title: "Mythe génératif",
-    brothers: "b : brothers : bratři : base",
-    success: "s : succeeded : splnil : survived : symbol : sign",
-    generations: "g : generations : generace",
-    visual: "image",
+    brothers: "b : brothers : base",
+    success: "s : succès : survécu : symbole : signe",
+    generations: "g : générations",
+    visual: "forme",
     myth: "mythe",
     citySize: "taille de la ville",
     zoom: "zoom",
@@ -103,11 +94,8 @@ const copy = {
     downloadPng: "télécharger le PNG",
     copy: "copier",
     copied: "Copié",
-    successHint:
-      "Séparez les nombres par des virgules. + ajoute le plus petit nombre libre, − retire le dernier ; les flèches modifient le dernier.",
     truncated: "… l’image dépasse la limite sûre de 30 000 villes",
     canvasLabel: "Image géométrique récursive du mythe génératif",
-    language: "Langue",
   },
 } as const;
 
@@ -187,8 +175,10 @@ function download(name: string, blob: Blob) {
 export default function GenerativeMyth() {
   const [language, setLanguage] = useState<Language>("cz");
   const [brothers, setBrothers] = useState(5);
+  const [brothersInput, setBrothersInput] = useState("5");
   const [successfulInput, setSuccessfulInput] = useState("5");
   const [generations, setGenerations] = useState(0);
+  const [generationsInput, setGenerationsInput] = useState("0");
   const [logSize, setLogSize] = useState(0);
   const [logZoom, setLogZoom] = useState(0);
   const [opacity, setOpacity] = useState(1);
@@ -242,8 +232,9 @@ export default function GenerativeMyth() {
     context.fillStyle = landColor;
     context.fillRect(0, 0, width, height);
 
-    const field = 100 / 2 ** logZoom;
-    const scale = Math.min(width, height) / (field * 2);
+    const fieldY = 100 / 2 ** logZoom;
+    const scale = height / (fieldY * 2);
+    const fieldX = width / (scale * 2);
     const radius = 5 * 2 ** logSize;
     const fill = hexToRgba(cityColor, opacity);
 
@@ -255,10 +246,10 @@ export default function GenerativeMyth() {
     const result = walkCities(brothers, survivors, generations, (city) => {
       const margin = radius * 1.5;
       if (
-        city.x + margin < -field ||
-        city.x - margin > field ||
-        city.y + margin < -field ||
-        city.y - margin > field
+        city.x + margin < -fieldX ||
+        city.x - margin > fieldX ||
+        city.y + margin < -fieldY ||
+        city.y - margin > fieldY
       )
         return;
       const points = polygonPoints(city, brothers, radius);
@@ -282,11 +273,15 @@ export default function GenerativeMyth() {
   ]);
 
   useEffect(() => {
-    drawCanvas();
+    if (tab !== "visual") return;
+    const frame = window.requestAnimationFrame(drawCanvas);
     const observer = new ResizeObserver(drawCanvas);
     if (stageRef.current) observer.observe(stageRef.current);
-    return () => observer.disconnect();
-  }, [drawCanvas]);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [drawCanvas, tab]);
 
   const exportSvg = () => {
     const size = 1600;
@@ -326,6 +321,33 @@ export default function GenerativeMyth() {
 
   const setSuccessful = (values: number[]) =>
     setSuccessfulInput(values.join(", "));
+
+  const applyBrothers = (value: string) => {
+    if (!/^\d+$/.test(value)) return;
+    const next = Number(value);
+    if (next < 3 || next > 1000) return;
+    setBrothers(next);
+    setSuccessful(parseSurvivors(successfulInput, next));
+  };
+
+  const commitBrothers = () => {
+    const next = clamp(Number(brothersInput), 3, 1000);
+    setBrothers(next);
+    setBrothersInput(String(next));
+    setSuccessful(parseSurvivors(successfulInput, next));
+  };
+
+  const applyGenerations = (value: string) => {
+    if (!/^\d+$/.test(value)) return;
+    const next = Number(value);
+    if (next >= 0 && next <= 10000) setGenerations(next);
+  };
+
+  const commitGenerations = () => {
+    const next = clamp(Number(generationsInput), 0, 10000);
+    setGenerations(next);
+    setGenerationsInput(String(next));
+  };
 
   const addSuccessful = () => {
     const used = new Set(survivors);
@@ -369,19 +391,18 @@ export default function GenerativeMyth() {
     <main className="app-shell">
       <header className="masthead">
         <h1>{t.title}</h1>
-        <label className="language-select">
-          <span>{t.language}</span>
+        <div className="language-select">
           <select
-            aria-label={t.language}
+            aria-label="Language"
             value={language}
             onChange={(event) => setLanguage(event.target.value as Language)}
           >
-            <option value="cz">Čeština</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-            <option value="fr">Français</option>
+            <option value="cz">CZ</option>
+            <option value="en">EN</option>
+            <option value="de">GE</option>
+            <option value="fr">FR</option>
           </select>
-        </label>
+        </div>
       </header>
 
       <div className="workspace">
@@ -392,13 +413,15 @@ export default function GenerativeMyth() {
               type="number"
               min="3"
               max="1000"
-              value={brothers}
+              value={brothersInput}
               onChange={(event) => {
-                const next = clamp(Number(event.target.value), 3, 1000);
-                setBrothers(next);
-                setSuccessful(
-                  parseSurvivors(successfulInput, next),
-                );
+                const value = event.target.value;
+                setBrothersInput(value);
+                applyBrothers(value);
+              }}
+              onBlur={commitBrothers}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
               }}
             />
           </label>
@@ -406,6 +429,33 @@ export default function GenerativeMyth() {
           <div className="field success-field">
             <span>{t.success}</span>
             <div className="success-vector">
+              <input
+                aria-label={t.success}
+                inputMode="numeric"
+                type="text"
+                value={successfulInput}
+                onChange={(event) => setSuccessfulInput(event.target.value)}
+                onBlur={() => setSuccessful(survivors)}
+              />
+              <div className="success-stepper">
+                <button
+                  aria-label="Increase last successful brother"
+                  onClick={() => stepLastSuccessful(1)}
+                  title="Increase last"
+                  type="button"
+                >
+                  ▴
+                </button>
+                <button
+                  aria-label="Decrease last successful brother"
+                  disabled={survivors.length === 0}
+                  onClick={() => stepLastSuccessful(-1)}
+                  title="Decrease last"
+                  type="button"
+                >
+                  ▾
+                </button>
+              </div>
               <button
                 aria-label="Remove last successful brother"
                 disabled={survivors.length === 0}
@@ -414,32 +464,6 @@ export default function GenerativeMyth() {
                 type="button"
               >
                 −
-              </button>
-              <input
-                aria-describedby="success-hint"
-                aria-label={t.success}
-                inputMode="numeric"
-                type="text"
-                value={successfulInput}
-                onChange={(event) => setSuccessfulInput(event.target.value)}
-                onBlur={() => setSuccessful(survivors)}
-              />
-              <button
-                aria-label="Decrease last successful brother"
-                disabled={survivors.length === 0}
-                onClick={() => stepLastSuccessful(-1)}
-                title="Decrease last"
-                type="button"
-              >
-                ↓
-              </button>
-              <button
-                aria-label="Increase last successful brother"
-                onClick={() => stepLastSuccessful(1)}
-                title="Increase last"
-                type="button"
-              >
-                ↑
               </button>
               <button
                 aria-label="Add lowest unused successful brother"
@@ -451,7 +475,6 @@ export default function GenerativeMyth() {
                 +
               </button>
             </div>
-            <small id="success-hint">{t.successHint}</small>
           </div>
 
           <label className="field">
@@ -460,10 +483,16 @@ export default function GenerativeMyth() {
               type="number"
               min="0"
               max="10000"
-              value={generations}
-              onChange={(event) =>
-                setGenerations(clamp(Number(event.target.value), 0, 10000))
-              }
+              value={generationsInput}
+              onChange={(event) => {
+                const value = event.target.value;
+                setGenerationsInput(value);
+                applyGenerations(value);
+              }}
+              onBlur={commitGenerations}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+              }}
             />
           </label>
 
