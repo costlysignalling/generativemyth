@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
+import { encodeMyth, generateMyth } from "../app/myth.ts";
 
 const projectRoot = new URL("../", import.meta.url);
 
@@ -44,6 +45,9 @@ test("server-renders the finished Generative Myth app", async () => {
     /s : succeeded : splnil : survived : symbol : sign/,
   );
   assert.match(html, /g : generations : generace/);
+  assert.match(html, /Čeština/);
+  assert.match(html, /Deutsch/);
+  assert.match(html, /Français/);
   assert.match(html, /https:\/\/myth\.example\/og-dark\.png/);
   assert.doesNotMatch(
     html,
@@ -61,9 +65,15 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
 
   assert.match(component, /^"use client";/);
   assert.match(component, /download SVG|stáhnout SVG/i);
+  assert.match(component, /encodeMyth/);
+  assert.match(component, /successfulInput/);
+  assert.match(component, />raw</);
   assert.match(component, /MAX_CITIES = 30_000/);
   assert.match(myth, /There stands a castle in the middle of the world/);
   assert.match(myth, /Uprostřed světa stojí hrad/);
+  assert.match(myth, /In der Mitte der Welt steht ein Schloss/);
+  assert.match(myth, /Au milieu du monde se dresse un château/);
+  assert.match(myth, /integerToLetters/);
   assert.doesNotMatch(css, /@import|https?:\/\//);
   assert.match(css, /::-moz-range-thumb/);
   assert.match(css, /border-radius:\s*0/);
@@ -74,6 +84,25 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   );
   await access(new URL("../public/og.png", import.meta.url));
   await access(new URL(".openai/hosting.json", projectRoot));
+});
+
+test("encodes labels, exact angles, and quantities in raw base 26", () => {
+  const raw = encodeMyth(
+    "Princ číslo 2 se vydá pod úhel 13.85 stupňů do města číslo 2. Je jich 26.",
+    "cz",
+    26,
+  );
+  assert.equal(
+    raw,
+    "PRINC CISLO B SE VYDA POD UHEL N W STUPNU DO MESTA CISLO B JE JICH BA",
+  );
+
+  for (const language of ["cz", "en", "de", "fr"]) {
+    const myth = generateMyth(language, 5, [2, 4], 1);
+    const encoded = encodeMyth(myth, language, 5);
+    assert.match(encoded, /^[A-Z\n ]+$/);
+    assert.ok(myth.length > 1_000);
+  }
 });
 
 test("produces a self-contained double-clickable archival file", async () => {

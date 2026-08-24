@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { generateMyth, type Language } from "./myth";
+import { encodeMyth, generateMyth, type Language } from "./myth";
 
-type SuccessMode = "single" | "several" | "all";
 type Tab = "visual" | "myth";
 type City = { x: number; y: number; rotation: number };
 type RenderResult = { drawn: number; truncated: boolean };
@@ -16,26 +15,22 @@ const copy = {
     title: "Generativní Mýtus",
     brothers: "b : brothers : bratři : base",
     success: "s : succeeded : splnil : survived : symbol : sign",
-    single: "1 : one : jeden",
-    several: "+ : more : více",
-    all: "* : all : všichni",
-    prince: "s : succeeded : splnil : survived : symbol : sign",
-    vector:
-      "s : succeeded : splnil : survived : symbol : sign (vector : vektor)",
     generations: "g : generations : generace",
-    visual: "plot : obraz",
-    myth: "myth : mýtus",
-    citySize: "city size : velikost města",
-    zoom: "zoom",
-    opacity: "city opacity : neprůhlednost města",
-    advanced: "advanced visual settings : vzhled",
-    cityColor: "city color : barva města",
-    landColor: "land color : barva krajiny",
-    reset: "reset : výchozí",
-    downloadSvg: "download SVG : stáhnout SVG",
-    downloadPng: "download PNG : stáhnout PNG",
-    copy: "copy : kopírovat",
+    visual: "obraz",
+    myth: "mýtus",
+    citySize: "velikost města",
+    zoom: "přiblížení",
+    opacity: "neprůhlednost města",
+    advanced: "vzhled",
+    cityColor: "barva města",
+    landColor: "barva krajiny",
+    reset: "výchozí vzhled",
+    downloadSvg: "stáhnout SVG",
+    downloadPng: "stáhnout PNG",
+    copy: "kopírovat",
     copied: "Zkopírováno",
+    successHint:
+      "Čísla oddělte čárkami. + přidá nejnižší volné číslo, − odstraní poslední; šipky mění poslední číslo.",
     truncated:
       "… obraz přesahuje bezpečný limit 30 000 měst",
     canvasLabel: "Rekurzivní geometrický obraz generativního mýtu",
@@ -45,30 +40,74 @@ const copy = {
     title: "Generative Myth",
     brothers: "b : brothers : bratři : base",
     success: "s : succeeded : splnil : survived : symbol : sign",
-    single: "1 : one : jeden",
-    several: "+ : more : více",
-    all: "* : all : všichni",
-    prince: "s : succeeded : splnil : survived : symbol : sign",
-    vector:
-      "s : succeeded : splnil : survived : symbol : sign (vector : vektor)",
     generations: "g : generations : generace",
-    visual: "plot : obraz",
-    myth: "myth : mýtus",
-    citySize: "city size : velikost města",
+    visual: "plot",
+    myth: "myth",
+    citySize: "city size",
     zoom: "zoom",
-    opacity: "city opacity : neprůhlednost města",
-    advanced: "advanced visual settings : vzhled",
-    cityColor: "city color : barva města",
-    landColor: "land color : barva krajiny",
-    reset: "reset : výchozí",
-    downloadSvg: "download SVG : stáhnout SVG",
-    downloadPng: "download PNG : stáhnout PNG",
-    copy: "copy : kopírovat",
+    opacity: "city opacity",
+    advanced: "visual settings",
+    cityColor: "city color",
+    landColor: "land color",
+    reset: "reset appearance",
+    downloadSvg: "download SVG",
+    downloadPng: "download PNG",
+    copy: "copy",
     copied: "Copied",
+    successHint:
+      "Separate numbers with commas. + adds the lowest unused number, − removes the last; arrows change the last number.",
     truncated:
       "… image exceeds the safe limit of 30,000 cities",
     canvasLabel: "Recursive geometric image of the generative myth",
     language: "Language",
+  },
+  de: {
+    title: "Generativer Mythos",
+    brothers: "b : brothers : bratři : base",
+    success: "s : succeeded : splnil : survived : symbol : sign",
+    generations: "g : generations : generace",
+    visual: "Bild",
+    myth: "Mythos",
+    citySize: "Stadtgröße",
+    zoom: "Vergrößerung",
+    opacity: "Deckkraft der Stadt",
+    advanced: "Darstellung",
+    cityColor: "Stadtfarbe",
+    landColor: "Landfarbe",
+    reset: "Darstellung zurücksetzen",
+    downloadSvg: "SVG herunterladen",
+    downloadPng: "PNG herunterladen",
+    copy: "kopieren",
+    copied: "Kopiert",
+    successHint:
+      "Zahlen durch Kommas trennen. + ergänzt die kleinste freie Zahl, − entfernt die letzte; die Pfeile ändern die letzte Zahl.",
+    truncated: "… das Bild überschreitet die sichere Grenze von 30.000 Städten",
+    canvasLabel: "Rekursives geometrisches Bild des generativen Mythos",
+    language: "Sprache",
+  },
+  fr: {
+    title: "Mythe génératif",
+    brothers: "b : brothers : bratři : base",
+    success: "s : succeeded : splnil : survived : symbol : sign",
+    generations: "g : generations : generace",
+    visual: "image",
+    myth: "mythe",
+    citySize: "taille de la ville",
+    zoom: "zoom",
+    opacity: "opacité de la ville",
+    advanced: "apparence",
+    cityColor: "couleur de la ville",
+    landColor: "couleur du paysage",
+    reset: "réinitialiser l’apparence",
+    downloadSvg: "télécharger le SVG",
+    downloadPng: "télécharger le PNG",
+    copy: "copier",
+    copied: "Copié",
+    successHint:
+      "Séparez les nombres par des virgules. + ajoute le plus petit nombre libre, − retire le dernier ; les flèches modifient le dernier.",
+    truncated: "… l’image dépasse la limite sûre de 30 000 villes",
+    canvasLabel: "Image géométrique récursive du mythe génératif",
+    language: "Langue",
   },
 } as const;
 
@@ -80,7 +119,7 @@ function parseSurvivors(value: string, brothers: number) {
     .split(/[\s,;]+/)
     .map(Number)
     .filter((item) => Number.isInteger(item) && item >= 1 && item <= brothers);
-  return [...new Set(parsed)].sort((a, b) => a - b);
+  return [...new Set(parsed)];
 }
 
 function polygonPoints(city: City, brothers: number, radius: number) {
@@ -148,16 +187,15 @@ function download(name: string, blob: Blob) {
 export default function GenerativeMyth() {
   const [language, setLanguage] = useState<Language>("cz");
   const [brothers, setBrothers] = useState(5);
-  const [mode, setMode] = useState<SuccessMode>("single");
-  const [single, setSingle] = useState(5);
-  const [several, setSeveral] = useState("1, 2, 3");
+  const [successfulInput, setSuccessfulInput] = useState("5");
   const [generations, setGenerations] = useState(0);
   const [logSize, setLogSize] = useState(0);
   const [logZoom, setLogZoom] = useState(0);
   const [opacity, setOpacity] = useState(1);
-  const [cityColor, setCityColor] = useState("#f4efe1");
-  const [landColor, setLandColor] = useState("#121515");
+  const [cityColor, setCityColor] = useState("#ffffff");
+  const [landColor, setLandColor] = useState("#000000");
   const [tab, setTab] = useState<Tab>("visual");
+  const [raw, setRaw] = useState(false);
   const [renderResult, setRenderResult] = useState<RenderResult>({
     drawn: 1,
     truncated: false,
@@ -167,21 +205,23 @@ export default function GenerativeMyth() {
   const stageRef = useRef<HTMLDivElement>(null);
   const t = copy[language];
 
-  const survivors = useMemo(() => {
-    if (mode === "all")
-      return Array.from({ length: brothers }, (_, index) => index + 1);
-    if (mode === "single") return [clamp(single, 1, brothers)];
-    const parsed = parseSurvivors(several, brothers);
-    return parsed.length ? parsed : [1];
-  }, [brothers, mode, several, single]);
+  const survivors = useMemo(
+    () => parseSurvivors(successfulInput, brothers),
+    [brothers, successfulInput],
+  );
 
   const myth = useMemo(
-    () =>
-      tab === "myth"
-        ? generateMyth(language, brothers, survivors, generations)
-        : "",
-    [brothers, generations, language, survivors, tab],
+    () => {
+      if (tab !== "myth") return "";
+      const story = generateMyth(language, brothers, survivors, generations);
+      return raw ? encodeMyth(story, language, brothers) : story;
+    },
+    [brothers, generations, language, raw, survivors, tab],
   );
+
+  useEffect(() => {
+    document.documentElement.lang = language === "cz" ? "cs" : language;
+  }, [language]);
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -280,8 +320,43 @@ export default function GenerativeMyth() {
     setLogSize(0);
     setLogZoom(0);
     setOpacity(1);
-    setCityColor("#f4efe1");
-    setLandColor("#121515");
+    setCityColor("#ffffff");
+    setLandColor("#000000");
+  };
+
+  const setSuccessful = (values: number[]) =>
+    setSuccessfulInput(values.join(", "));
+
+  const addSuccessful = () => {
+    const used = new Set(survivors);
+    const next = Array.from({ length: brothers }, (_, index) => index + 1).find(
+      (value) => !used.has(value),
+    );
+    if (next !== undefined) setSuccessful([...survivors, next]);
+  };
+
+  const removeSuccessful = () => setSuccessful(survivors.slice(0, -1));
+
+  const stepLastSuccessful = (direction: -1 | 1) => {
+    if (survivors.length === 0) {
+      if (direction > 0) setSuccessful([1]);
+      return;
+    }
+
+    const next = [...survivors];
+    const occupied = new Set(next.slice(0, -1));
+    let candidate = next[next.length - 1] + direction;
+    while (
+      candidate >= 1 &&
+      candidate <= brothers &&
+      occupied.has(candidate)
+    ) {
+      candidate += direction;
+    }
+    if (candidate >= 1 && candidate <= brothers) {
+      next[next.length - 1] = candidate;
+      setSuccessful(next);
+    }
   };
 
   const copyMyth = async () => {
@@ -294,22 +369,19 @@ export default function GenerativeMyth() {
     <main className="app-shell">
       <header className="masthead">
         <h1>{t.title}</h1>
-        <div className="language-switch" aria-label={t.language}>
-          <button
-            className={language === "cz" ? "active" : ""}
-            onClick={() => setLanguage("cz")}
-            type="button"
+        <label className="language-select">
+          <span>{t.language}</span>
+          <select
+            aria-label={t.language}
+            value={language}
+            onChange={(event) => setLanguage(event.target.value as Language)}
           >
-            CZ
-          </button>
-          <button
-            className={language === "en" ? "active" : ""}
-            onClick={() => setLanguage("en")}
-            type="button"
-          >
-            EN
-          </button>
-        </div>
+            <option value="cz">Čeština</option>
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
       </header>
 
       <div className="workspace">
@@ -324,52 +396,63 @@ export default function GenerativeMyth() {
               onChange={(event) => {
                 const next = clamp(Number(event.target.value), 3, 1000);
                 setBrothers(next);
-                setSingle((current) => clamp(current, 1, next));
+                setSuccessful(
+                  parseSurvivors(successfulInput, next),
+                );
               }}
             />
           </label>
 
-          <fieldset className="field">
-            <legend>{t.success}</legend>
-            <div className="segmented">
-              {(["single", "several", "all"] as SuccessMode[]).map((item) => (
-                <button
-                  className={mode === item ? "active" : ""}
-                  key={item}
-                  onClick={() => setMode(item)}
-                  type="button"
-                >
-                  {t[item]}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          {mode === "single" && (
-            <label className="field">
-              <span>{t.prince}</span>
+          <div className="field success-field">
+            <span>{t.success}</span>
+            <div className="success-vector">
+              <button
+                aria-label="Remove last successful brother"
+                disabled={survivors.length === 0}
+                onClick={removeSuccessful}
+                title="Remove last"
+                type="button"
+              >
+                −
+              </button>
               <input
-                type="number"
-                min="1"
-                max={brothers}
-                value={single}
-                onChange={(event) =>
-                  setSingle(clamp(Number(event.target.value), 1, brothers))
-                }
-              />
-            </label>
-          )}
-
-          {mode === "several" && (
-            <label className="field">
-              <span>{t.vector}</span>
-              <input
+                aria-describedby="success-hint"
+                aria-label={t.success}
+                inputMode="numeric"
                 type="text"
-                value={several}
-                onChange={(event) => setSeveral(event.target.value)}
+                value={successfulInput}
+                onChange={(event) => setSuccessfulInput(event.target.value)}
+                onBlur={() => setSuccessful(survivors)}
               />
-            </label>
-          )}
+              <button
+                aria-label="Decrease last successful brother"
+                disabled={survivors.length === 0}
+                onClick={() => stepLastSuccessful(-1)}
+                title="Decrease last"
+                type="button"
+              >
+                ↓
+              </button>
+              <button
+                aria-label="Increase last successful brother"
+                onClick={() => stepLastSuccessful(1)}
+                title="Increase last"
+                type="button"
+              >
+                ↑
+              </button>
+              <button
+                aria-label="Add lowest unused successful brother"
+                disabled={survivors.length >= brothers}
+                onClick={addSuccessful}
+                title="Add lowest unused"
+                type="button"
+              >
+                +
+              </button>
+            </div>
+            <small id="success-hint">{t.successHint}</small>
+          </div>
 
           <label className="field">
             <span>{t.generations}</span>
@@ -466,29 +549,6 @@ export default function GenerativeMyth() {
         </aside>
 
         <section className="output-panel">
-          <div className="output-toolbar">
-            <div className="tabs" role="tablist">
-              <button
-                aria-selected={tab === "visual"}
-                className={tab === "visual" ? "active" : ""}
-                onClick={() => setTab("visual")}
-                role="tab"
-                type="button"
-              >
-                {t.visual}
-              </button>
-              <button
-                aria-selected={tab === "myth"}
-                className={tab === "myth" ? "active" : ""}
-                onClick={() => setTab("myth")}
-                role="tab"
-                type="button"
-              >
-                {t.myth}
-              </button>
-            </div>
-          </div>
-
           {tab === "visual" ? (
             <>
               <div className="canvas-stage" ref={stageRef}>
@@ -511,6 +571,39 @@ export default function GenerativeMyth() {
               <pre>{myth}</pre>
             </article>
           )}
+
+          <div className="output-toolbar">
+            <div className="tabs" role="tablist">
+              <button
+                aria-selected={tab === "visual"}
+                className={tab === "visual" ? "active" : ""}
+                onClick={() => setTab("visual")}
+                role="tab"
+                type="button"
+              >
+                {t.visual}
+              </button>
+              <button
+                aria-selected={tab === "myth"}
+                className={tab === "myth" ? "active" : ""}
+                onClick={() => setTab("myth")}
+                role="tab"
+                type="button"
+              >
+                {t.myth}
+              </button>
+            </div>
+            {tab === "myth" && (
+              <label className="raw-toggle">
+                <input
+                  checked={raw}
+                  onChange={(event) => setRaw(event.target.checked)}
+                  type="checkbox"
+                />
+                <span>raw</span>
+              </label>
+            )}
+          </div>
         </section>
       </div>
     </main>

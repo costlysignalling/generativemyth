@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const origin = `${protocol}://${host}`;
   const title = "Generative Myth · Generativní Mýtus";
   const description =
-    "A recursive, bilingual visual myth generator that runs entirely in your browser.";
+    "A recursive visual myth generator in Czech, English, German, and French that runs entirely in your browser.";
 
   return {
     title,
