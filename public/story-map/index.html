@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Kairologická cesta knihou Země v roce 40 000.">
+    <title>Kairologická cesta knihou</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050506'/%3E%3Cpath d='M8 34h48' stroke='%23f00080' stroke-width='8'/%3E%3Ccircle cx='42' cy='34' r='7' fill='%23ffe600' stroke='%23f00080' stroke-width='3'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="story-map.css">
+  </head>
+  <body>
+    <main class="viewer" aria-label="Kairologická cesta knihou">
+      <div class="stage" id="stage">
+        <div class="chapter" aria-live="polite" aria-atomic="true">
+          <span class="chapter__name" id="chapter-name"></span>
+          <span class="chapter__position" id="chapter-position"></span>
+        </div>
+
+        <svg id="story-map" role="img" aria-labelledby="map-title map-description">
+          <title id="map-title">Kairologická cesta knihou</title>
+          <desc id="map-description">Růžová část označuje již přečtený text. Bílé oblouky ukazují skoky mezi částmi knihy a žlutý bod aktuální pozici.</desc>
+          <g id="timeline-layer"></g>
+          <g id="reading-layer"></g>
+          <g id="jump-layer"></g>
+          <g id="marker-layer"></g>
+        </svg>
+
+        <div class="control-dock" id="control-dock">
+          <div class="step-controls" id="step-controls" aria-hidden="true">
+            <button class="control-button control-button--edge" id="go-start" type="button" aria-label="Na začátek" tabindex="-1">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 5v14M18 6l-8 6 8 6"/></svg>
+            </button>
+            <button class="control-button control-button--step" id="previous-frame" type="button" aria-label="Předchozí snímek" tabindex="-1">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15.5 5 8.5 12l7 7"/></svg>
+            </button>
+            <button class="control-button control-button--primary control-button--reverse" id="play-reverse" type="button" aria-label="Přehrát pozpátku" tabindex="-1">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 6-9 6 9 6Z"/></svg>
+            </button>
+          </div>
+
+          <button class="control-button control-button--primary" id="play-pause" type="button" aria-label="Pozastavit">
+            <svg class="icon-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+            <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 9 6-9 6Z"/></svg>
+          </button>
+
+          <div class="step-controls" id="next-step-control" aria-hidden="true">
+            <button class="control-button control-button--step" id="next-frame" type="button" aria-label="Následující snímek" tabindex="-1">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8.5 5 7 7-7 7"/></svg>
+            </button>
+            <button class="control-button control-button--edge" id="go-end" type="button" aria-label="Na konec" tabindex="-1">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 5v14M6 6l8 6-8 6"/></svg>
+            </button>
+          </div>
+
+          <div class="keyboard-hint" id="keyboard-hint" role="status">Můžete také použít šipky na klávesnici.</div>
+        </div>
+
+        <div class="settings-wrap">
+          <button class="settings-button" id="settings-button" type="button" aria-label="Nastavení animace" aria-expanded="false" aria-controls="settings-panel">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 2 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+
+          <section class="settings-panel" id="settings-panel" aria-label="Nastavení animace" hidden>
+            <div class="setting">
+              <div class="setting__heading">
+                <label for="speed-slider">Rychlost</label>
+                <output id="speed-output" for="speed-slider">1×</output>
+              </div>
+              <input id="speed-slider" type="range" min="-2" max="2" step="0.01" value="0">
+            </div>
+
+            <div class="setting">
+              <div class="setting__heading">
+                <label for="beta-slider">Vliv délky kapitoly</label>
+                <output id="beta-output" for="beta-slider">β = 0.50</output>
+              </div>
+              <input id="beta-slider" type="range" min="0.15" max="1" step="0.01" value="0.5">
+              <div class="range-labels" aria-hidden="true"><span>vyrovnanější</span><span>úměrný délce</span></div>
+            </div>
+
+            <div class="setting label-setting segmented-control" role="radiogroup" aria-label="Zobrazené názvy">
+              <label><input type="radio" name="label-mode" value="name" checked><span>Pracovní názvy</span></label>
+              <label><input type="radio" name="label-mode" value="opening"><span>Obsah</span></label>
+            </div>
+
+            <div class="settings-actions">
+              <button type="button" id="colorcode" aria-pressed="false">Colorcode</button>
+              <button type="button" id="reset-settings">Výchozí nastavení</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="loading" id="loading">Načítání…</div>
+      </div>
+    </main>
+
+    <script src="story-map-data.js"></script>
+    <script src="story-map.js"></script>
+  </body>
+</html>
