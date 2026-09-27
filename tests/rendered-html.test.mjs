@@ -75,7 +75,9 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /control-column arrow-column/);
   assert.match(component, /b : brothers : Brüder : base/);
   assert.match(component, /s : succès : survécu : symbole : signe/);
-  assert.match(component, />raw</);
+  assert.match(component, />\s*raw\s*<\/button>/);
+  assert.match(component, /aria-pressed=\{raw\}/);
+  assert.doesNotMatch(component, /className="raw-toggle"/);
   assert.match(component, /SAFE_MAX_CITIES = 50_000/);
   assert.match(component, /riskMode \? Number\.POSITIVE_INFINITY : SAFE_MAX_CITIES/);
   assert.match(component, /cityCoordinateKey/);
@@ -84,6 +86,7 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /simplify/);
   assert.match(component, /story-map-link/);
   assert.match(component, /\.\/story-map\//);
+  assert.match(css, /\.mode-option-button\s*\{[^}]*height:\s*36px;/s);
   assert.match(myth, /There stands a castle in the middle of the world/);
   assert.match(myth, /Uprostřed světa stojí hrad/);
   assert.match(myth, /In der Mitte der Welt steht ein Schloss/);

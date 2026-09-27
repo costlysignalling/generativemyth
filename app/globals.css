@@ -377,32 +377,14 @@ input[type="range"]::-moz-range-thumb {
   padding: 11px 17px;
 }
 
-.raw-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 13px;
-  border: 1px solid var(--line-bright);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.raw-toggle input {
-  width: 13px;
-  height: 13px;
-  margin: 0;
-  accent-color: var(--white);
-}
-
 .render-options {
   display: inline-flex;
   gap: 6px;
 }
 
-.render-options button {
-  min-height: 34px;
-  padding: 6px 10px;
+.mode-option-button {
+  height: 36px;
+  padding: 0 13px;
   border: 1px solid var(--line);
   border-radius: 0;
   color: var(--muted);
@@ -411,8 +393,8 @@ input[type="range"]::-moz-range-thumb {
   font-size: 11px;
 }
 
-.render-options button:hover,
-.render-options button.active {
+.mode-option-button:hover,
+.mode-option-button.active {
   border-color: var(--white);
   color: var(--black);
   background: var(--white);

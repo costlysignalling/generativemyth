@@ -730,20 +730,20 @@ export default function GenerativeMyth() {
                 </button>
               </div>
               {tab === "myth" && (
-                <label className="raw-toggle">
-                  <input
-                    checked={raw}
-                    onChange={(event) => setRaw(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span>raw</span>
-                </label>
+                <button
+                  aria-pressed={raw}
+                  className={`mode-option-button${raw ? " active" : ""}`}
+                  onClick={() => setRaw((value) => !value)}
+                  type="button"
+                >
+                  raw
+                </button>
               )}
               {tab === "visual" && (
                 <div className="render-options">
                   <button
                     aria-pressed={simplify}
-                    className={simplify ? "active" : ""}
+                    className={`mode-option-button${simplify ? " active" : ""}`}
                     onClick={() => setSimplify((value) => !value)}
                     type="button"
                   >
@@ -752,7 +752,7 @@ export default function GenerativeMyth() {
                   {(renderResult.truncated || riskMode) && (
                     <button
                       aria-pressed={riskMode}
-                      className={riskMode ? "active" : ""}
+                      className={`mode-option-button${riskMode ? " active" : ""}`}
                       onClick={() => setRiskMode((value) => !value)}
                       type="button"
                     >
