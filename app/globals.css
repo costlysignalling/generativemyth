@@ -365,6 +365,13 @@ input[type="range"]::-moz-range-thumb {
   margin-top: 10px;
 }
 
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .tabs button {
   min-width: 112px;
   padding: 11px 17px;
@@ -409,6 +416,37 @@ input[type="range"]::-moz-range-thumb {
   border-color: var(--white);
   color: var(--black);
   background: var(--white);
+}
+
+.story-map-link {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line-bright);
+  border-radius: 50%;
+  color: var(--white);
+  background: transparent;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.story-map-link:hover,
+.story-map-link:focus-visible {
+  color: var(--black);
+  background: var(--white);
+}
+
+.story-map-link svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.55;
 }
 
 .canvas-stage {
@@ -509,6 +547,19 @@ input[type="range"]::-moz-range-thumb {
   .myth-panel {
     min-height: 480px;
     height: 65vh;
+  }
+
+  .output-toolbar {
+    gap: 10px;
+  }
+
+  .view-controls {
+    gap: 7px;
+  }
+
+  .tabs button {
+    min-width: 88px;
+    padding-inline: 12px;
   }
 }
 

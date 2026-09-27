@@ -82,6 +82,8 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(component, /navigator\.languages/);
   assert.match(component, /setLanguage\(detectLanguage\(\)\)/);
   assert.match(component, /simplify/);
+  assert.match(component, /story-map-link/);
+  assert.match(component, /\.\/story-map\//);
   assert.match(myth, /There stands a castle in the middle of the world/);
   assert.match(myth, /Uprostřed světa stojí hrad/);
   assert.match(myth, /In der Mitte der Welt steht ein Schloss/);
@@ -93,11 +95,15 @@ test("keeps the app client-side and independent of remote runtimes", async () =>
   assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) 34px 34px/);
   assert.match(css, /border-radius:\s*0/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  assert.deepEqual(
-    await readdir(new URL("../app/_sites-preview", import.meta.url)),
-    [],
-  );
+  const previewFiles = await readdir(
+    new URL("../app/_sites-preview", import.meta.url),
+  ).catch((error) => {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  });
+  assert.deepEqual(previewFiles, []);
   await access(new URL("../public/og.png", import.meta.url));
+  await access(new URL("../public/story-map/index.html", import.meta.url));
   await access(new URL(".openai/hosting.json", projectRoot));
 });
 

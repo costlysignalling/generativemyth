@@ -31,6 +31,7 @@ const copy = {
     copied: "Zkopírováno",
     simplify: "zjednodušit",
     risk: "risknout",
+    storyMap: "Mapa příběhu",
     truncated:
       "… obraz přesahuje bezpečný limit 50 000 měst",
     canvasLabel: "Rekurzivní geometrický obraz generativního mýtu",
@@ -55,6 +56,7 @@ const copy = {
     copied: "Copied",
     simplify: "simplify",
     risk: "risk it",
+    storyMap: "Story map",
     truncated:
       "… image exceeds the safe limit of 50,000 cities",
     canvasLabel: "Recursive geometric image of the generative myth",
@@ -79,6 +81,7 @@ const copy = {
     copied: "Kopiert",
     simplify: "vereinfachen",
     risk: "riskieren",
+    storyMap: "Karte der Geschichte",
     truncated: "… das Bild überschreitet die sichere Grenze von 50.000 Städten",
     canvasLabel: "Rekursives geometrisches Bild des generativen Mythos",
   },
@@ -102,6 +105,7 @@ const copy = {
     copied: "Copié",
     simplify: "simplifier",
     risk: "risquer",
+    storyMap: "Carte du récit",
     truncated: "… l’image dépasse la limite sûre de 50 000 villes",
     canvasLabel: "Image géométrique récursive du mythe génératif",
   },
@@ -241,6 +245,8 @@ export default function GenerativeMyth() {
   );
 
   useEffect(() => {
+    // Language detection is deliberately client-only so server output hydrates consistently.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLanguage(detectLanguage());
   }, []);
 
@@ -702,58 +708,71 @@ export default function GenerativeMyth() {
           )}
 
           <div className="output-toolbar">
-            <div className="tabs" role="tablist">
-              <button
-                aria-selected={tab === "visual"}
-                className={tab === "visual" ? "active" : ""}
-                onClick={() => setTab("visual")}
-                role="tab"
-                type="button"
-              >
-                {t.visual}
-              </button>
-              <button
-                aria-selected={tab === "myth"}
-                className={tab === "myth" ? "active" : ""}
-                onClick={() => setTab("myth")}
-                role="tab"
-                type="button"
-              >
-                {t.myth}
-              </button>
-            </div>
-            {tab === "myth" && (
-              <label className="raw-toggle">
-                <input
-                  checked={raw}
-                  onChange={(event) => setRaw(event.target.checked)}
-                  type="checkbox"
-                />
-                <span>raw</span>
-              </label>
-            )}
-            {tab === "visual" && (
-              <div className="render-options">
+            <div className="view-controls">
+              <div className="tabs" role="tablist">
                 <button
-                  aria-pressed={simplify}
-                  className={simplify ? "active" : ""}
-                  onClick={() => setSimplify((value) => !value)}
+                  aria-selected={tab === "visual"}
+                  className={tab === "visual" ? "active" : ""}
+                  onClick={() => setTab("visual")}
+                  role="tab"
                   type="button"
                 >
-                  {t.simplify}
+                  {t.visual}
                 </button>
-                {(renderResult.truncated || riskMode) && (
+                <button
+                  aria-selected={tab === "myth"}
+                  className={tab === "myth" ? "active" : ""}
+                  onClick={() => setTab("myth")}
+                  role="tab"
+                  type="button"
+                >
+                  {t.myth}
+                </button>
+              </div>
+              {tab === "myth" && (
+                <label className="raw-toggle">
+                  <input
+                    checked={raw}
+                    onChange={(event) => setRaw(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>raw</span>
+                </label>
+              )}
+              {tab === "visual" && (
+                <div className="render-options">
                   <button
-                    aria-pressed={riskMode}
-                    className={riskMode ? "active" : ""}
-                    onClick={() => setRiskMode((value) => !value)}
+                    aria-pressed={simplify}
+                    className={simplify ? "active" : ""}
+                    onClick={() => setSimplify((value) => !value)}
                     type="button"
                   >
-                    {t.risk}
+                    {t.simplify}
                   </button>
-                )}
-              </div>
-            )}
+                  {(renderResult.truncated || riskMode) && (
+                    <button
+                      aria-pressed={riskMode}
+                      className={riskMode ? "active" : ""}
+                      onClick={() => setRiskMode((value) => !value)}
+                      type="button"
+                    >
+                      {t.risk}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <a
+              aria-label={t.storyMap}
+              className="story-map-link"
+              href="./story-map/"
+              title={t.storyMap}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="m3.5 5.5 5-2 7 2.5 5-2v14.5l-5 2-7-2.5-5 2Z" />
+                <path d="M8.5 3.5V18M15.5 6v14.5" />
+              </svg>
+            </a>
           </div>
         </section>
       </div>

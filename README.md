@@ -13,6 +13,7 @@ rendering process.
 - Guardrails for patterns that would otherwise contain millions of cities.
 - A standalone static build for ordinary web hosting.
 - A Cloudflare-compatible production build for Sites and custom domains.
+- A hidden story-map companion page linked from the round map control.
 
 ## Run locally
 
