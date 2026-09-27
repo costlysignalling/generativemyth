@@ -9,6 +9,7 @@
   const HINT_KEY = "story-map-keyboard-hint-seen";
   const STORY_WIDTH = 4000;
   const JUMP_HALF_WIDTH = 2000;
+  const JUMP_SAMPLE_COUNT = 96;
   const elements = {
     stage: document.querySelector("#stage"),
     svg: document.querySelector("#story-map"),
@@ -56,6 +57,10 @@
   let previousTimestamp = null;
   let previousPhaseIndex = -1;
   let firstPauseHandled = false;
+  let positionMarker = null;
+  let previousChapterName = "";
+  let previousChapterColor = "";
+  let previousChapterPosition = "";
 
   const sectionRects = data.sections.map(() => createSvg("rect", {
     y: -2000,
@@ -64,6 +69,9 @@
   }));
   const jumpPaths = [];
   const jumpLengths = [];
+  const jumpPointTables = [];
+  const completedSectionCounts = new Uint16Array(data.sections.length);
+  const completedJumpFlags = new Uint8Array(Math.max(0, data.route.length - 1));
 
   initialize();
 
@@ -123,13 +131,14 @@
       jumpLengths.push(path.getTotalLength());
     }
 
-    elements.marker.append(createSvg("circle", {
+    positionMarker = createSvg("circle", {
       id: "position-marker",
       r: 7200,
       fill: "#ffe600",
       stroke: "#f00080",
       "stroke-width": 3200,
-    }));
+    });
+    elements.marker.append(positionMarker);
 
     syncControlsFromSettings();
     applyColorMode();
@@ -154,13 +163,26 @@
     const shouldAutoPlay = playing;
     setPlaying(false, false);
     render();
-    elements.loading.classList.add("is-hidden");
-    window.setTimeout(() => {
-      elements.loading.remove();
-      if (shouldAutoPlay) {
-        window.setTimeout(() => setPlaying(true, false, 1), data.defaults.introHoldMs);
-      }
-    }, 220);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      preloadJumpPoints();
+      elements.loading.classList.add("is-hidden");
+      window.setTimeout(() => {
+        elements.loading.remove();
+        if (shouldAutoPlay) {
+          window.setTimeout(() => setPlaying(true, false, 1), data.defaults.introHoldMs);
+        }
+      }, 220);
+    }));
+  }
+
+  function preloadJumpPoints() {
+    jumpPaths.forEach((path, routeIndex) => {
+      const length = jumpLengths[routeIndex];
+      jumpPointTables[routeIndex] = Array.from({ length: JUMP_SAMPLE_COUNT + 1 }, (_, sampleIndex) => {
+        const point = path.getPointAtLength(length * sampleIndex / JUMP_SAMPLE_COUNT);
+        return { x: point.x, y: point.y };
+      });
+    });
   }
 
   function rebuildPhases(anchor = null) {
@@ -216,48 +238,93 @@
     const progress = phase.duration ? clamp((time - phase.start) / phase.duration, 0, 1) : 1;
 
     if (phaseIndex !== previousPhaseIndex) {
-      renderCompletedState(phaseIndex);
+      syncCompletedState(phaseIndex);
       previousPhaseIndex = phaseIndex;
     }
 
     const section = data.sections[phase.sectionIndex];
-    elements.chapterName.textContent = section[settings.labelMode];
-    elements.chapterName.style.color = settings.colorcode ? section.color : "";
-    elements.chapterPosition.textContent = `${phase.routeIndex + 1} / ${data.route.length}`;
+    const chapterName = section[settings.labelMode];
+    const chapterColor = settings.colorcode ? section.color : "";
+    const chapterPosition = `${phase.routeIndex + 1} / ${data.route.length}`;
+    if (chapterName !== previousChapterName) {
+      elements.chapterName.textContent = chapterName;
+      previousChapterName = chapterName;
+    }
+    if (chapterColor !== previousChapterColor) {
+      elements.chapterName.style.color = chapterColor;
+      previousChapterColor = chapterColor;
+    }
+    if (chapterPosition !== previousChapterPosition) {
+      elements.chapterPosition.textContent = chapterPosition;
+      previousChapterPosition = chapterPosition;
+    }
 
     let x;
     let y = 0;
     if (phase.type === "reading") {
-      const alreadyRead = wasSectionReadBefore(phaseIndex, phase.sectionIndex);
+      const alreadyRead = completedSectionCounts[phase.sectionIndex] > 0;
       sectionRects[phase.sectionIndex].setAttribute("width", alreadyRead ? section.characters : section.characters * progress);
       x = section.start + section.characters * progress;
     } else {
       jumpPaths[phase.routeIndex].setAttribute("stroke-dashoffset", 1 - progress);
-      const point = jumpPaths[phase.routeIndex].getPointAtLength(jumpLengths[phase.routeIndex] * progress);
+      const point = pointOnPreloadedJump(phase.routeIndex, progress);
       x = point.x;
       y = point.y;
     }
 
-    const marker = document.querySelector("#position-marker");
-    marker.setAttribute("cx", x);
-    marker.setAttribute("cy", y);
+    positionMarker.setAttribute("cx", x);
+    positionMarker.setAttribute("cy", y);
   }
 
-  function renderCompletedState(currentPhaseIndex) {
-    const completedSections = new Set();
-    const completedJumps = new Set();
-    for (let index = 0; index < currentPhaseIndex; index += 1) {
-      const phase = phases[index];
-      if (phase.type === "reading") completedSections.add(phase.sectionIndex);
-      else if (phase.type === "jumping") completedJumps.add(phase.routeIndex);
+  function pointOnPreloadedJump(routeIndex, progress) {
+    const points = jumpPointTables[routeIndex];
+    if (!points) {
+      return jumpPaths[routeIndex].getPointAtLength(jumpLengths[routeIndex] * progress);
     }
+    const samplePosition = clamp(progress, 0, 1) * JUMP_SAMPLE_COUNT;
+    const lowerIndex = Math.floor(samplePosition);
+    const upperIndex = Math.min(JUMP_SAMPLE_COUNT, lowerIndex + 1);
+    const fraction = samplePosition - lowerIndex;
+    const lower = points[lowerIndex];
+    const upper = points[upperIndex];
+    return {
+      x: lower.x + (upper.x - lower.x) * fraction,
+      y: lower.y + (upper.y - lower.y) * fraction,
+    };
+  }
 
+  function resetCompletedState(currentPhaseIndex) {
+    completedSectionCounts.fill(0);
+    completedJumpFlags.fill(0);
+    for (let index = 0; index < currentPhaseIndex; index += 1) updateCompletedPhase(index, 1);
     sectionRects.forEach((rect, index) => {
-      rect.setAttribute("width", completedSections.has(index) ? data.sections[index].characters : 0);
+      rect.setAttribute("width", completedSectionCounts[index] ? data.sections[index].characters : 0);
     });
     jumpPaths.forEach((path, index) => {
-      path.setAttribute("stroke-dashoffset", completedJumps.has(index) ? 0 : 1);
+      path.setAttribute("stroke-dashoffset", completedJumpFlags[index] ? 0 : 1);
     });
+  }
+
+  function updateCompletedPhase(phaseIndex, delta) {
+    const phase = phases[phaseIndex];
+    if (phase.type === "reading") {
+      const nextCount = Math.max(0, completedSectionCounts[phase.sectionIndex] + delta);
+      completedSectionCounts[phase.sectionIndex] = nextCount;
+      sectionRects[phase.sectionIndex].setAttribute("width", nextCount ? data.sections[phase.sectionIndex].characters : 0);
+    } else {
+      completedJumpFlags[phase.routeIndex] = delta > 0 ? 1 : 0;
+      jumpPaths[phase.routeIndex].setAttribute("stroke-dashoffset", delta > 0 ? 0 : 1);
+    }
+  }
+
+  function syncCompletedState(currentPhaseIndex) {
+    if (previousPhaseIndex < 0) {
+      resetCompletedState(currentPhaseIndex);
+    } else if (currentPhaseIndex > previousPhaseIndex) {
+      for (let index = previousPhaseIndex; index < currentPhaseIndex; index += 1) updateCompletedPhase(index, 1);
+    } else {
+      for (let index = previousPhaseIndex - 1; index >= currentPhaseIndex; index -= 1) updateCompletedPhase(index, -1);
+    }
   }
 
   function tick(timestamp) {
@@ -265,7 +332,7 @@
     if (previousTimestamp !== null) time += (timestamp - previousTimestamp) * settings.speed * playbackDirection;
     previousTimestamp = timestamp;
 
-    if (time >= totalDuration) {
+    if (playbackDirection > 0 && time >= totalDuration) {
       time = totalDuration;
       setPlaying(false, false);
     } else if (time <= 0 && playbackDirection < 0) {
@@ -438,13 +505,6 @@
       else return middle;
     }
     return clamp(low, 0, phases.length - 1);
-  }
-
-  function wasSectionReadBefore(phaseIndex, sectionIndex) {
-    for (let index = 0; index < phaseIndex; index += 1) {
-      if (phases[index].type === "reading" && phases[index].sectionIndex === sectionIndex) return true;
-    }
-    return false;
   }
 
   function syncControlsFromSettings() {
