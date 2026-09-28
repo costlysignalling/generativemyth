@@ -129,16 +129,13 @@ test("encodes labels, exact angles, and quantities in raw base 26", () => {
   }
 });
 
-test("preloads story-map motion and reverses cleanly from the end", async () => {
+test("reverses story-map playback cleanly from the end", async () => {
   const storyMap = await readFile(
     new URL("../public/story-map/story-map.js", import.meta.url),
     "utf8",
   );
   assert.doesNotThrow(() => new Function(storyMap));
-  assert.match(storyMap, /const JUMP_SAMPLE_COUNT = 96/);
-  assert.match(storyMap, /function preloadJumpPoints\(\)/);
-  assert.match(storyMap, /pointOnPreloadedJump\(phase\.routeIndex, progress\)/);
-  assert.match(storyMap, /syncCompletedState\(phaseIndex\)/);
+  assert.doesNotMatch(storyMap, /preloadJumpPoints/);
   assert.match(
     storyMap,
     /playbackDirection > 0 && time >= totalDuration/,
